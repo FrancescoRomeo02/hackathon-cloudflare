@@ -1,0 +1,88 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "agent-native-pdf-sandbox",
+  "account_id": "049fa0c83d44ab59a466b059664cedca",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-08",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "ai": {
+    "binding": "AI"
+  },
+  "vars": {
+    "EMBEDDING_MODEL": "@cf/baai/bge-base-en-v1.5",
+    "CHAT_MODEL": "@cf/meta/llama-3.1-8b-instruct-fast",
+    "AI_GATEWAY_ID": "default"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "agent-native-pdf-sandbox-db",
+      "database_id": "b9432891-45b8-4360-bdee-955022869dd6"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "WORKSPACE_CACHE",
+      "id": "fe1b723ccdb54d88b60479c26aa0cabc"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "DOCUMENTS_BUCKET",
+      "bucket_name": "agent-native-pdf-sandbox-docs"
+    }
+  ],
+  "vectorize": [
+    {
+      "binding": "DOCUMENTS_INDEX",
+      "index_name": "agent-native-pdf-sandbox-index"
+    }
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "PARSE_QUEUE",
+        "queue": "agent-native-pdf-sandbox-parse"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "agent-native-pdf-sandbox-parse",
+        "max_batch_size": 4,
+        "max_batch_timeout": 10,
+        "max_retries": 5,
+        "dead_letter_queue": "agent-native-pdf-sandbox-parse-dlq"
+      }
+    ]
+  },
+  "containers": [
+    {
+      "class_name": "Sandbox",
+      "image": "./Dockerfile",
+      "instance_type": "lite",
+      "max_instances": 25
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "WORKSPACE_MANAGER",
+        "class_name": "WorkspaceManager"
+      },
+      {
+        "name": "Sandbox",
+        "class_name": "Sandbox"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["WorkspaceManager", "Sandbox"]
+    }
+  ]
+}
