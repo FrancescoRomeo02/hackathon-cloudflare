@@ -66,8 +66,178 @@ function json(data: unknown, init?: ResponseInit): Response {
   });
 }
 
+function html(content: string, init?: ResponseInit): Response {
+  return new Response(content, {
+    ...init,
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      ...(init?.headers ?? {})
+    }
+  });
+}
+
 function badRequest(message: string, status = 400): Response {
   return json({ error: message }, { status });
+}
+
+function renderHomePage(origin: string): string {
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Agent-Native PDF Sandbox</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4efe7;
+        --panel: #fffdf8;
+        --ink: #1f2937;
+        --muted: #5b6472;
+        --accent: #0f766e;
+        --border: #d6d3d1;
+        --code: #f3f4f6;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+        background:
+          radial-gradient(circle at top right, rgba(15, 118, 110, 0.12), transparent 24rem),
+          linear-gradient(180deg, #f7f3ec, var(--bg));
+        color: var(--ink);
+      }
+      .wrap {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 48px 20px 72px;
+      }
+      .hero, .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        box-shadow: 0 18px 60px rgba(15, 23, 42, 0.08);
+      }
+      .hero {
+        padding: 32px;
+        margin-bottom: 24px;
+      }
+      .eyebrow {
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font: 600 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      h1 {
+        margin: 10px 0 12px;
+        font-size: clamp(2rem, 4vw, 3.8rem);
+        line-height: 0.95;
+      }
+      p {
+        margin: 0 0 12px;
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 1.03rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+      }
+      .panel {
+        padding: 24px;
+      }
+      h2 {
+        margin: 0 0 12px;
+        font-size: 1.2rem;
+      }
+      ul {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--muted);
+      }
+      li { margin: 0 0 10px; }
+      code, pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      pre {
+        margin: 12px 0 0;
+        padding: 14px;
+        border-radius: 14px;
+        background: var(--code);
+        overflow-x: auto;
+        color: #111827;
+        font-size: 0.9rem;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .links {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+      }
+      .links a {
+        border: 1px solid var(--border);
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <section class="hero">
+        <div class="eyebrow">Cloudflare Workers + Sandboxes + AI</div>
+        <h1>Agent-Native PDF Sandbox</h1>
+        <p>
+          This deployment exposes an API for creating isolated workspaces, uploading PDFs,
+          indexing them with Workers AI + Vectorize, materializing agent sandboxes, and generating annotations.
+        </p>
+        <div class="links">
+          <a href="${origin}/health">Health JSON</a>
+          <a href="${origin}/api/workspaces">API root (POST only)</a>
+        </div>
+      </section>
+
+      <div class="grid">
+        <section class="panel">
+          <h2>Primary Endpoints</h2>
+          <ul>
+            <li><code>POST /api/workspaces</code></li>
+            <li><code>GET /api/workspaces/:workspaceId</code></li>
+            <li><code>POST /api/workspaces/:workspaceId/documents</code></li>
+            <li><code>POST /api/workspaces/:workspaceId/search</code></li>
+            <li><code>POST /api/workspaces/:workspaceId/agents/:agentName/materialize</code></li>
+            <li><code>POST /api/workspaces/:workspaceId/agents/:agentName/annotations</code></li>
+          </ul>
+        </section>
+
+        <section class="panel">
+          <h2>Create a Workspace</h2>
+          <pre>curl -L -X POST ${origin}/api/workspaces \\
+  -H 'content-type: application/json' \\
+  --data '{"name":"demo-workspace","agents":[{"name":"navigator","role":"document-navigation"},{"name":"reviewer","role":"semantic-review"}]}'</pre>
+        </section>
+
+        <section class="panel">
+          <h2>Upload a PDF</h2>
+          <pre>curl -L -X POST ${origin}/api/workspaces/&lt;workspaceId&gt;/documents \\
+  -F "file=@/absolute/path/to/file.pdf"</pre>
+        </section>
+
+        <section class="panel">
+          <h2>Semantic Search</h2>
+          <pre>curl -L -X POST ${origin}/api/workspaces/&lt;workspaceId&gt;/search \\
+  -H 'content-type: application/json' \\
+  --data '{"query":"find the main conclusions","topK":5}'</pre>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>`;
 }
 
 function parseJson<T>(value: string | null): T {
@@ -688,6 +858,10 @@ async function indexParsedDocument(env: Env, job: ParseJob) {
 async function routeApi(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
+
+  if (request.method === "GET" && path === "/") {
+    return html(renderHomePage(url.origin));
+  }
 
   if (request.method === "GET" && path === "/health") {
     return json({
