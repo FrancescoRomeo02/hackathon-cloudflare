@@ -1,0 +1,12 @@
+{
+  "name": "hackathon-claudflare",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "wrangler": "CLOUDFLARE_ACCOUNT_ID=049fa0c83d44ab59a466b059664cedca WRANGLER_LOG_PATH=.wrangler/logs wrangler",
+    "cf:whoami": "CLOUDFLARE_ACCOUNT_ID=049fa0c83d44ab59a466b059664cedca WRANGLER_LOG_PATH=.wrangler/logs wrangler whoami"
+  },
+  "devDependencies": {
+    "wrangler": "latest"
+  }
+}

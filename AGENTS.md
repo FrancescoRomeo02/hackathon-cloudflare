@@ -57,6 +57,12 @@ When a request depends on recency (e.g., "latest", "current", "today", "as of no
 - If the repo has no container workflow, create a minimal one.
 - Keep repo-specific container details in the repo’s `AGENTS.md`.
 
+### Repo container/tooling details
+
+- Use local Wrangler through `npm run wrangler -- <args>`; do not require a global host install. The npm scripts set `CLOUDFLARE_ACCOUNT_ID` and `WRANGLER_LOG_PATH=.wrangler/logs`.
+- The workshop Cloudflare account is `049fa0c83d44ab59a466b059664cedca`; copy `.env.example` to `.env` for non-npm local shells if needed.
+- Container workflow: `docker build -t hackathon-claudflare .` then run Wrangler commands with `docker run --rm -it --env-file .env -v "$PWD:/workspace" hackathon-claudflare npm run wrangler -- <args>`.
+
 ### Secrets and sensitive data
 
 - Never print secrets (tokens, private keys, credentials) to terminal output.
